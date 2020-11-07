@@ -8,7 +8,7 @@ library(tidyverse)
 ## d)
 
 # Laden des Datensatzes (siehe vorheriges Blatt)
-foodstamp <- read.table("foodstamp.dat",header=FALSE)
+foodstamp <- read.table("foodstamp.dat", header = FALSE)
 colnames(foodstamp) <- c("y", "TEN", "SUP", "INC")
 head(foodstamp)
 summary(foodstamp)
