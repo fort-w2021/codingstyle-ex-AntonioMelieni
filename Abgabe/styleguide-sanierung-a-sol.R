@@ -1,88 +1,59 @@
-### Exercise 6 GRM
+### Übung 6
 
 
-# load needed packages
+# Laden von benötigten Paketen:
 library(tidyverse)
 
 
-######## next section does load and clean up the data ########
+# Laden des Datensatzes (siehe vorheriges Blatt)
+foodstamp <- read.table("foodstamp.dat", header = FALSE)
+colnames(foodstamp) <- c("y", "TEN", "SUP", "INC")
+head(foodstamp)
+summary(foodstamp)
 
-# load foodstamp data set by using read.table function
-foodstamp_data <- read.table("foodstamp.dat", header = FALSE)
+# Entfernen der Beobachtungen mit einem Einkommen von 0:
+foodstamp <- foodstamp %>% filter(INC > 0)
 
-# rename columns by using colnames function
-colnames(foodstamp_data) <- c("y", "TEN", "SUP", "INC")
-
-# show head and summary of foodstamp data set by using head and summary function
-head(foodstamp_data)
-summary(foodstamp_data)
-
-# clean up observations with "no income" by using filter function and
-# redefine the data set
-foodstamp_data <- foodstamp_data %>% filter(INC > 0)
-
-######## next section fits a logit model and computes diagonal elements ########
-
-# fit a generalized linear model with log-link (logit-model) using glm function
-# and link = logit
-fit_logit_model <- glm(
+# Schätzung eines GLMs mit Logit-Link (Logit-Modell):
+model_logit <- glm(
   formula = y ~ TEN + SUP + INC,
-  family = binomial(link = "logit"), data = foodstamp_data
+  family = binomial(link = "logit"), data = foodstamp
 )
+summary(model_logit)
 
-# to interpret the model use summary
-summary(fit_logit_model)
-
-# function that outputs the diagonal elements of the generalized hat matrix
-# of a generalized linear model to later identify high-leverage points
-output_diag_elements <- function(glmobject) {
-  w <- glmobject$weights # weights of the IWLS-steep
-  x <- model.matrix(glmobject) # extract design-matrix X
-  wsqrt_x <- sqrt(w) * x
-  finv <- summary(glmobject)$cov.scaled # Inverse Fisher-matrix with scaled cov
-
-  calcualte_diag_elements <- diag(wsqrt_x %*% finv %*% t(wsqrt_x))
-
-  return(calcualte_diag_elements)
+# Funktion, die die Diagonalelemente der generalisierten Hat-Matrix ausgibt
+hatglm <- function(glmobject) {
+  # Gewichte aus dem terminalen IWLS-Schritt
+  w <- glmobject$weights
+  # Extrahieren der Design-Matrix X
+  x <- model.matrix(glmobject)
+  # Berechnen von sqrt(W^(t))*X
+  wsqrtX <- sqrt(w) * x
+  # Inverse Fisher-Matrix: hier gleich der skalierten Kovarianzmatrix von \beta
+  finv <- summary(glmobject)$cov.scaled
+  hii <- diag(wsqrtX %*% finv %*% t(wsqrtX))
+  return(hii)
 }
+hii <- hatglm(model_logit)
 
-# give out the diagonal elements of the fitted logit-model
-diag_elements_logit <- output_diag_elements(fit_logit_model)
-
-######## next section plots the diagonal elements and identifies high-leverage points ########
-
-# set number of observations in data using length function
-n <- length(foodstamp_data$y)
-
-# plot of diagonal elements against indicies using plot function to get
-# first overview
+# Anzahl Beobachtungen im Datensatz
+n <- length(foodstamp$y)
+# Plotten der Leverages (Diagonalelemente) gegen die Indizes
 par(mfrow = c(1, 1))
-plot(1:n, diag_elements_logit,
-  type = "b", xlab = "Index",
-  ylab = expression(h[ii])
-)
-
-# identify high-leverage points:
-# if H >= 2 * (p/n) where p is the number of coefficients in
-# the model and n is the number of observations we have a high-leverage point
-
-# set number of coefficients by using length function
-p <- length(fit_logit_model$coef)
-
-# draw a line in the plot to identify high-leverage points optically
-# using abline function
+plot(1:n, hii, type = "b", xlab = "Index", ylab = expression(h[ii]))
+p <- length(model_logit$coef)
+# H >= 2*p/n sind sogenannte high-leverage Punkte
 abline(h = 2 * p / n, lty = 3)
 
-# identify high-leverage points using which function
-show_high_leverage_points <- which(diag_elements_logit > 2 * p / n)
+# Identifikation der high-leverage Punkte d.h. wenn man die Daten dieser
+# Indizes herausnimmt kann man erwarten, dass sich die Schätzer stärker ändert,
+# als wenn andere Datenpunkte herausgelassen werden (Fausregel: h_ii > 2*p'/n):
+candhl <- which(hii > 2 * p / n)
+candhl
+# Beobachtungen 33 und 108
 
-# observation 33 and 108 from the data set seem to be high-leverage points
-show_high_leverage_points
-
-######## next section compares my function with an implemented R function  ########
-
-# get diagonal elements using R function hatvalues
-diag_elements_r_function <- hatvalues(fit_logit_model)
-
-# we get the same diagonal elements using R's hatvalue function
-all.equal(diag_elements_logit, diag_elements_r_function)
+# Vergleich mit in R implementierter Funktion "hatvalues"
+hii_r <- hatvalues(model_logit)
+sum((hii - hii_r)^2)
+all.equal(hii, hii_r)
+# gleiches Ergebnis wie bei der in R implementierten Funktion
