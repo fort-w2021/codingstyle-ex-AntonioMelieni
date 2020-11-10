@@ -144,10 +144,10 @@ summary(fit_logit_model)
 # function that outputs the diagonal elements of the generalized hat matrix
 # of a generalized linear model to later identify high-leverage points
 output_diag_elements <- function(glm_object) {
-  weights_glm <- glm_object$weights # weights of the IWLS-steep
+  weights_glm <- glm_object[["weights"]] # weights of the IWLS-steep
   design_x <- model.matrix(glm_object) # extract design-matrix X
   weights_sqrt_design <- sqrt(weights_glm) * design_x
-  fisher_inv <- summary(glm_object)$cov.scaled # Inverse Fisher-matrix with scaled cov
+  fisher_inv <- summary(glm_object)[["cov.scaled"]] # Inverse Fisher-matrix with scaled cov
 
   calcualte_diag_elements <- diag(weights_sqrt_design %*% fisher_inv %*% 
                                     t(weights_sqrt_design))
@@ -161,11 +161,10 @@ diag_elements_logit <- output_diag_elements(fit_logit_model)
 ######## next section plots the diagonal elements and identifies high-leverage points ########
 
 # set number of observations in data using length function
-number_obs <- length(foodstamp_data$y)
+number_obs <- length(foodstamp_data[["y"]])
 
 # plot of diagonal elements against indicies using plot function to get
 # first overview
-par(mfrow = c(1, 1))
 plot(1:number_obs, diag_elements_logit,
   type = "b", xlab = "Index",
   ylab = expression(h[ii])
@@ -176,7 +175,7 @@ plot(1:number_obs, diag_elements_logit,
 # the model and n is the number of observations we have a high-leverage point
 
 # set number of coefficients by using length function
-number_coef <- length(fit_logit_model$coef)
+number_coef <- length(fit_logit_model[["coef"]])
 
 # draw a line in the plot to identify high-leverage points optically
 # using abline function

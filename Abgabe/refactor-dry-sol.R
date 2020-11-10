@@ -1,7 +1,6 @@
 
 # the following function calculates the basic statistics mean, standard deviation
 # and a 95% confidence interval for normal random numbers
-
 output_basic_stats <- function(number_obs) {
 
   # generate a vector of random numbers
