@@ -35,7 +35,7 @@ hatglm <- function(glmobject) {
   return(hii)
 }
 hii <- hatglm(model_logit)
-
+ 
 # Anzahl Beobachtungen im Datensatz
 n <- length(foodstamp$y)
 # Plotten der Leverages (Diagonalelemente) gegen die Indizes
