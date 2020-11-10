@@ -56,3 +56,4 @@ sum((hii - hii_R)^2)
 all.equal(hii, hii_R)
 # gleiches Ergebnis wie bei der in R implementierten Funktion
       
+
